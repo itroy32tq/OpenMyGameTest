@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using App.Scripts.Scenes.SceneFillwords.Features.FillwordModels;
-using Unity.VisualScripting;
 using UnityEngine;
-using static UnityEngine.ParticleSystem;
 
 namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
 {
@@ -17,11 +15,11 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
         private string[] levelMapList;
 
         private string patternLevel = @"(\d{1,4}\s(?:\d{1,}[;]){1,})\d{1,}";
-        private string pattern = @"(\d{1,4}\s)(\S*)";
+        private readonly string pattern = @"(\d{1,4}\s)(\S*)";
 
         private GridFillWords model;
         //todo пока костыль, не очень ясно какая математика для связи координат
-        private List<Vector2Int> modelMask = new()
+        private readonly List<Vector2Int> modelMask = new()
         { 
             new Vector2Int(0,0), new Vector2Int(0,1), new Vector2Int(1,0), new Vector2Int(1,1),
             new Vector2Int(2,0), new Vector2Int(2,1), new Vector2Int(0,2), new Vector2Int(1,2),
@@ -38,7 +36,7 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
 
         private KeyValuePair<string, int[]> ParseLevelProperty(string level)
         {
-            Regex regex = new Regex(pattern);
+            Regex regex = new(pattern);
             Match match = regex.Match(level);
 
             int wordIndex = Int32.Parse(match.Groups[1].Value);
@@ -46,22 +44,22 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
             return new KeyValuePair<string, int[]>(wordMap[wordIndex], match.Groups[2].Value.Split(';').Select(x => int.Parse(x)).ToArray());
         }
 
-        private List<String> ParseLevelData(int indexLevel)
+        private List<string> ParseLevelData(int indexLevel)
         {
 
-            List <String> result = new List<String>();
+            List <string> result = new();
 
             string level = levelMapList[indexLevel];
 
             MatchCollection matches = Regex.Matches(level, patternLevel);
-            foreach (Match match in matches) result.Add(match.Value);
+            foreach (Match match in matches.Cast<Match>()) result.Add(match.Value);
             
             return result;
         }
 
         private List<KeyValuePair<string, int[]>> GetLevelProperty(List<String> property)
         {
-            List<KeyValuePair<string, int[]>> result = new List<KeyValuePair<string, int[]>>();
+            List<KeyValuePair<string, int[]>> result = new();
 
             foreach (string key in property) 
             {
@@ -73,14 +71,7 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
 
         public GridFillWords LoadModel(int index)
         {
-            //напиши реализацию не меняя сигнатуру функции
-
-            //index = 8;
-
-            string curWord = "";
-            int[] curProperty = null;
-
-            List<String> levelWordsList = ParseLevelData(index);
+            List<string> levelWordsList = ParseLevelData(index);
 
             List<KeyValuePair<string, int[]>> levelsProperty = GetLevelProperty(levelWordsList);
 
@@ -91,8 +82,12 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
             
             foreach (KeyValuePair<string, int[]> keyPair in levelsProperty)
             {
-                curWord = keyPair.Key;
-                curProperty = keyPair.Value;
+                //напиши реализацию не меняя сигнатуру функции
+
+                //index = 8;
+
+                string curWord = keyPair.Key;
+                int[] curProperty = keyPair.Value;
                 FillModel(curWord, curProperty);
             }
 
@@ -102,7 +97,7 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
         private GridFillWords CreateModel(int count)
         {
             //todo пока не придумал математику для определения размеров модели
-            Vector2Int size = new Vector2Int();
+            Vector2Int size = new();
             if (count <= 4)
             {
                 size.x = size.y = (count % 3) + 1;
@@ -146,7 +141,7 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
 
             for (int i = 0; i < word.Length - 1; i++)
             {
-                CharGridModel tChar = new CharGridModel(word[i]);
+                CharGridModel tChar = new(word[i]);
                 int x = modelMask[prop[i]].x;
                 int y = modelMask[prop[i]].y;
                 model.Set(x, y, tChar);
