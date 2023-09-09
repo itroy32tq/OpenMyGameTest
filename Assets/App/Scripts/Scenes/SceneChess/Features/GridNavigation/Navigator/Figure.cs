@@ -1,119 +1,96 @@
 using App.Scripts.Scenes.SceneChess.Features.ChessField.Types;
-using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Numerics;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 
-
-public abstract class Figure: IChainFinder
+public abstract class Figure
 {
-    private ChessUnitType figureName;
-    public ChessUnitType FigureName { get => figureName; set => figureName = value; }
+    protected List<Vector2Int> _moves = new();
+    protected ChessUnitType _name;
+    protected int[] _direction;
+    protected int[,] _matrixDirection;
+    protected int _mul;
+    protected Vector2Int[] _baseModulStep;
+    public ChessUnitType Name { get => _name; set => _name = value; }
+    public List<Vector2Int> Moves { get => _moves; set => _moves = value; }
+    public int MovesCount { get => _moves.Count; }
 
-    protected Vector2Int[] _moves;
-
-    protected int _mulKoef;
-    public int MulKoef => _mulKoef;
-
-    public Vector2Int LastPos { get; set; }
-    public Vector2Int FinalPosition { get; set; }
-    public List<LinkedList<Vector2Int>> ChainContener { get ; set ; }
-    public Vector2Int[] Moves { get => _moves; set => _moves = value; }
-    public int MovesCount { get => _moves.Length;  }
-
-    public Figure(Vector2Int position)
+    public Figure(ChessUnitType name)
     { 
-        FinalPosition = position;
+        _name = name;
     }
-
-    public void InitChainContener(Vector2Int pos)
+    public List<Vector2Int> GetAviableMoves(Vector2Int pos)
     {
-        ChainContener = new()
-        {
-            new LinkedList<Vector2Int>(new List<Vector2Int>() { pos })
-        };
-
-    }
-
-    public LinkedList<Vector2Int> AddUnitToChain(LinkedList<Vector2Int> chain)
-    {
-
-        for (int i = 0; i < MovesCount; i++)
-        {
-            LinkedList<Vector2Int> original_chain = new LinkedList<Vector2Int>(chain);
-
-            var unit = original_chain.Last.Value + Moves[i];
-
-            var res = ValidationChain(unit);
-
-            switch (res)
-            {
-                case 1:
-                    original_chain.AddLast(unit);
-                    ChainContener.Add(original_chain);
-                    break;
-                case 0:
-                    original_chain.AddLast(unit);
-                    Debug.Log("!!!!!!!!!!!!!!!!");
-                    return original_chain;
-            }
-        }
-        ChainContener.RemoveAt(0);
-        return null;
-
-    }
-
-    public int ValidationChain(Vector2Int unit)
-    {
-        if (unit == FinalPosition) return 0;
-
-        if (unit.x < 0 || unit.x > 7 || unit.y < 0 || unit.y > 7) return -1;
         
-        return 1;
-    }
-    public LinkedList<Vector2Int> GetVariantMoves(Vector2Int point)
-    {
-        LinkedList <Vector2Int> variants = new();
-        foreach (var move in Moves)
-        { 
-            var vector = point + move;
-            variants.AddLast(vector);
+        foreach (var step in _baseModulStep)
+        {
+            for (int i = 0; i < _mul; i++)
+                for (int j = 0; j < _mul; j++)
+                {
+                    for (int z = 0; z < _direction.Length; z++)
+                    {
+                        var v = step * _matrixDirection[i, j];
+                        if (v.sqrMagnitude != 0) _moves.Add(v);
+                    }
+                    
+                }
         }
-        return null;
+        return _moves; 
     }
-    public void SaveChainInContener() { }
+    protected static int[,] MatrixCreator(int[] value)
+    {
+        int[,] result = new int[2, 2];
+        result[0,0] = value[0];
+        result[0,1] = value[1];
+        result[1,0] = value[2];
+        result[1, 1] = value[3];
+        return result;
+    }
 }
 
 public class Pon : Figure
 {
-    public Pon(Vector2Int position) : base(position)
+    
+    public Pon(ChessUnitType name) : base(name)
     {
-        
-        _moves = new Vector2Int[]
-        {
-            new Vector2Int(0,1)
-        };
-        _mulKoef = 1;
+        _baseModulStep = new[] { new Vector2Int(0, 1) };
+        //todo добавить костыль для пешки
+        _direction = new[] {0,0,1,0};
+        _matrixDirection = MatrixCreator(_direction);
+        _mul = 1; 
+
     }
 }
 public class Knight : Figure
 {
-    public Knight(Vector2Int position) : base(position)
+    public Knight(ChessUnitType name) : base (name)
     {
-        _moves = new Vector2Int[]
-        {
-            new Vector2Int(-1,-2),
-            new Vector2Int(1,-2),
-            new Vector2Int(-1,2),
-            new Vector2Int(1,2),
-            new Vector2Int(-2,1),
-            new Vector2Int(-2,-1),
-            new Vector2Int(2,1),
-            new Vector2Int(2,-1),
+        _baseModulStep = new[] { new Vector2Int(2, 1), new Vector2Int(1, 2) };
+        _direction = new[] { 1, -1, 1, -1 };
+        _matrixDirection = MatrixCreator(_direction);
+        _mul = 1;
+    }
+}
 
-        };
-        _mulKoef = 1;
+public class Rook : Figure
+{
+    public Rook(ChessUnitType name) : base(name)
+    {
+        
+    }
+}
+
+public class Bishop : Figure
+{
+    public Bishop(ChessUnitType name) : base(name)
+    {
+       
+    }
+}
+
+public class Queen : Figure
+{
+    public Queen(ChessUnitType name) : base(name)
+    {
+       
     }
 }
