@@ -12,8 +12,8 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
     {
         private Figure figure;
         //todo за 500 итерация справляется, но нужно оптимизировать алгоритм и добавить защиту от обратного хода
-        //сократил с 512 до 380, думаю достаточно done
-        private int countIteration = 100000;
+        //сократил с 512 до 350, думаю достаточно done
+        private int countIteration = 2048*4;
         public List<LinkedList<Vector2Int>> ChainContener { get; set; }
 
         public Vector2Int FinalPosition { get; set; }
@@ -30,8 +30,6 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
             FinalPosition = to;
             
             Grid = grid;
-
-            GridFigure = Grid.Pieces;
 
             figure = DetectFigure(unit);
 
@@ -51,43 +49,15 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
             return null;
         }
 
-        public int ValidateTargetPos(Vector2Int pos, LinkedList<Vector2Int> chain)
+        public bool ChekVictory(Vector2Int pos)
         {
-
-            //если позиция за пределами экрана
-            if (pos.x < 0 || pos.x > 7 || pos.y < 0 || pos.y > 7) return -1;
-
-            //если на пути другая фигура (кроме коня)
-            if (figure.Name != ChessUnitType.Knight && IsCrossingPath(pos, chain)) return -2;
-
-            //если на позиции другая фигура
-            if (Grid.Get(pos) != null) return -3;
-
-            //если это "обратый" ход
-            if (chain.Last.Previous != null && chain.Last.Previous.Value == pos) return  -4;
 
             //если целевая позиция найдена и мир спасен
-            if (pos == FinalPosition) return 1;
+            if (pos == FinalPosition) return true;
 
-            return 0;
-        }
-
-        private bool IsCrossingPath(Vector2Int pos, LinkedList<Vector2Int> chain)
-        {
-            Vector2Int vectorPath = chain.Last.Value - pos;
-            float pathLen = vectorPath.magnitude;
-            
-            foreach (var f in GridFigure)
-            {
-                //проверка на самого себя
-                if (f.CellPosition == chain.First.Value) continue;
-                //todo возможно есть способ лучше, но с ходу я не придумал, точка лежит на прямой, если разбивает отрезки
-                var vector1 = (pos - f.CellPosition).magnitude;
-                var vector2 = (f.CellPosition - chain.Last.Value).magnitude;
-                if (Mathf.Approximately(pathLen, vector2 + vector1))  return true;
-            }
             return false;
         }
+
         public void InitChainContener(Vector2Int pos)
         {
             ChainContener = new()
@@ -98,7 +68,7 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
         }
         public LinkedList<Vector2Int> AddUnitToChain(LinkedList<Vector2Int> chain)
         {
-            figure.Moves = figure.GetAviableMoves(chain.Last.Value);
+            figure.Moves = figure.GetAviableMoves(chain.Last.Value, chain, Grid);
             
             for (int i = 0; i < figure.MovesCount; i++)
             {
@@ -107,17 +77,15 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
 
                 var unit = original_chain.Last.Value + figure.Moves[i];
 
-                var res = ValidateTargetPos(unit ,chain);
-
-                switch (res)
+                if (ChekVictory(unit))
                 {
-                    case 0:
-                        original_chain.AddLast(unit);
-                        ChainContener.Add(original_chain);
-                        break;
-                    case 1:
-                        original_chain.AddLast(unit);
-                        return original_chain;
+                    original_chain.AddLast(unit);
+                    return original_chain;
+                }
+                else
+                {
+                    original_chain.AddLast(unit);
+                    ChainContener.Add(original_chain);
                 }
             }
             ChainContener.RemoveAt(0);
@@ -138,7 +106,9 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
                 case ChessUnitType.Bishop:
                     return new Bishop(unit);
                 case ChessUnitType.Queen:
-                    return new Bishop(unit);
+                    return new Queen(unit);
+                case ChessUnitType.King:
+                    return new King(unit);
             }
             return null;
         }
