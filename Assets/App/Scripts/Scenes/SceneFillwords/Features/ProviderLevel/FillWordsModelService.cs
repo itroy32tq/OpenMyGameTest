@@ -1,3 +1,4 @@
+using App.Scripts.Scenes.SceneFillwords.Features.FillwordModels;
 using System;
 using UnityEngine;
 
@@ -25,5 +26,14 @@ public class FillWordsModelService
     public Vector2Int Get—oordinate(int index)
     {
         return new Vector2Int(DivisionUp(index + 1, _size.x), RemainderIn(index + 1, _size.x));
+    }
+    public void Initialize(GridFillWords model)
+    {
+        for (int i = 0; i < Size.x; i++)
+            for (int j = 0; j < Size.x; j++)
+            {
+                CharGridModel tChar = new(' ');
+                model.Set(i, j, tChar);
+            }
     }
 }

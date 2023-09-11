@@ -9,24 +9,32 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
 {
     public class ProviderFillwordLevel : IProviderFillwordLevel
     {
-        private string[] _wordMap;
-        private string[] _levelMap;
+        private readonly string[] _wordMap;
+        private readonly string[] _levelMap;
 
-        private string patternLevel = @"(\d{1,4}\s(?:\d{1,}[;]){1,})\d{1,}";
+        private readonly string patternLevel = @"(\d{1,4}\s(?:\d{1,}[;]){1,})\d{1,}";
         private readonly string pattern = @"(\d{1,4}\s)(\S*)";
 
         private GridFillWords model;
+        private FillWordsModelService fillService;
 
         public ProviderFillwordLevel()
         {
-            
-            var data = Resources.LoadAll<TextAsset>("Fillwords");
+            TextAsset[] data;
 
-            _levelMap = data[0].text.Split("\n");
-            _wordMap = data[1].text.Split('\n');
+            try 
+            {
+                data = Resources.LoadAll<TextAsset>("Fillwords");
+                _levelMap = data[0].text.Split("\n");
+                _wordMap = data[1].text.Split('\n');
+            }
+            catch 
+            {
+                throw new Exception("отсутствуют файлы для парсинга уровней в ProviderFillwordLevel");
+            }
             
         }
-
+        #region Parsing
         private KeyValuePair<string, int[]> ParseLevelProperty(string level)
         {
             Regex regex = new(pattern);
@@ -42,7 +50,6 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
             
             List <string> result = new();
 
-
             MatchCollection matches = Regex.Matches(_levelMap[indexLevel], patternLevel);
 
             foreach (Match match in matches.Cast<Match>()) result.Add(match.Value);
@@ -50,7 +57,7 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
             return result;
         }
 
-        private List<KeyValuePair<string, int[]>> GetLevelProperty(List<String> property)
+        private List<KeyValuePair<string, int[]>> GetLevelProperty(List<string> property)
         {
             List<KeyValuePair<string, int[]>> result = new();
 
@@ -61,30 +68,30 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
 
             return result;
         }
-
+        #endregion
         public GridFillWords LoadModel(int index)
         {
-
             //напиши реализацию не меняя сигнатуру функции
             List<KeyValuePair<string, int[]>> levelProperty = GetLevelProperty(ParseLevelData(index));
 
-            //todo
-            int maxCharCount = ValidationPropertyData(levelProperty);
+            if (ValidationPropertyData(index, levelProperty))
+            {
+                model = new GridFillWords(fillService.Size);
+                fillService.Initialize(model);
+            }
+            else
+            {
+                Debug.Log("неправильно проиндексирован уровень " + index.ToString());
+                return LoadModel(index + 1);
+            } 
              
-            return CreateModel(maxCharCount, levelProperty);
+            return FillModel(levelProperty);
         }
 
-        private GridFillWords CreateModel(int count, List<KeyValuePair<string, int[]>> levelProperty)
+        private GridFillWords FillModel(List<KeyValuePair<string, int[]>> levelProperty)
         {
-
-
-            FillWordsModelService service = new(count);
-
-            model = new GridFillWords(service.Size);
-
             foreach (KeyValuePair<string, int[]> keyPair in levelProperty)
             {
-
                 string curWord = keyPair.Key;
                 int[] curProperty = keyPair.Value;
                 CharGridModel tChar;
@@ -93,40 +100,35 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
                 for (int i = 0; i < curWord.Length; i++)
                 {
                     tChar = new(curWord[i]);
-                    coordinate = service.GetСoordinate(curProperty[i]);
+                    coordinate = fillService.GetСoordinate(curProperty[i]);
                     
                     model.Set(coordinate.x-1, coordinate.y-1, tChar);
                 }
-                //класс GridFillWords создает только такие массивы кратные 3 и 2 (одновременно)
-                //иными словами, уровни кде количество букв 5,7,8 нужно достраивать в ручную
-                for (int i = count; i < service.ScalarSize; i++)
-                {
-                    
-                    tChar = new(" ".ToCharArray().First());
-                    coordinate = service.GetСoordinate(i);
-                    model.Set(coordinate.x - 1, coordinate.y - 1, tChar);
-                }
             }
-
             return model;
         }
 
-        private int ValidationPropertyData(List<KeyValuePair<string, int[]>> levelProperty)
+        private bool ValidationPropertyData(int index, List<KeyValuePair<string, int[]>> levelProperty)
         {
-            var newList = from p in levelProperty select p.Value;
-
-            var aggregateArray = newList.Aggregate((first, next) => first.Concat(next).OrderBy(x => x).ToArray());
-            var sortedArray = aggregateArray.OrderBy(x => x).ToArray();
-
-            //todo try catch
-
-            //проверяем что индексы образуют неразрывный ряд с 0
-            if (sortedArray[0] != 0 || sortedArray[sortedArray.Length - 1] != sortedArray.Length - 1)
+            try
             {
-                Debug.Log("Ошибка в уровне: невозможно сгенерировать модель, в описании уровня ошибка");
-                return -1;
+                int[]  aggregateIndexArray = (from p in levelProperty select p.Value).Aggregate((first, next) => first.Concat(next).OrderBy(x => x).ToArray());
+                string aggregateWordArray = (from p in levelProperty select p.Key).Aggregate((first, next) => next + first);
+
+                //количество символов в словах несоответствует количеству индексов для их расшифровки
+                if (aggregateWordArray.Length != aggregateIndexArray.Length) return false;
+
+                fillService = new(aggregateWordArray.Length);
+                
+                // однобуквенные слова мы не отображаем, плюс максимальный индекс должен помещаться в матрицу на экране
+                if (aggregateWordArray.Length < 2 || aggregateIndexArray.Last() >= fillService.ScalarSize) return false;
+
+                return true;
             }
-           return sortedArray.Length;
+            catch
+            {
+                throw new Exception("некорректные данные для парсинга уровней в ProviderFillwordLevel " + index);
+            }
         }
     }
 }
