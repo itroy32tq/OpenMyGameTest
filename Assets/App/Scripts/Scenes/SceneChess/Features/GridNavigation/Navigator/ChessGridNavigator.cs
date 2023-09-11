@@ -1,7 +1,6 @@
 ﻿using App.Scripts.Scenes.SceneChess.Features.ChessField.GridMatrix;
 using App.Scripts.Scenes.SceneChess.Features.ChessField.Piece;
 using App.Scripts.Scenes.SceneChess.Features.ChessField.Types;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;

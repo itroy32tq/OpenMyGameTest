@@ -8,7 +8,6 @@ public abstract class Figure
     protected List<Vector2Int> _moves = new();
     protected ChessUnitType _name;
     protected Vector2Int[] _direction;
-    protected int[,] _matrixDirection;
     protected int _mul;
     protected Vector2Int[] _baseModulStep;
     public ChessUnitType Name { get => _name; set => _name = value; }
@@ -29,10 +28,10 @@ public abstract class Figure
             {
                 for (int z = 0; z < _direction.Length; z++)
                 {
-                    var rr = new Vector2Int(step.x * _direction[z].x, step.y * _direction[z].y) * (i + 1);
-                    var newStep = pos + rr;
+                    var newStep = new Vector2Int(step.x * _direction[z].x, step.y * _direction[z].y) * (i + 1);
+                    var newPos = pos + newStep;
 
-                    if (ValidateTargetStep(newStep, chain, grid) && !_moves.Contains(rr)) _moves.Add(rr);
+                    if (ValidateTargetStep(newPos, chain, grid) && !_moves.Contains(newStep)) _moves.Add(newStep);
                 }
             } 
         }
