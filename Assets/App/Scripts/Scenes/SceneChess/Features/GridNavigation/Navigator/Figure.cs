@@ -49,7 +49,7 @@ public abstract class Figure
         if (Name != ChessUnitType.Knight && IsCrossingPath(pos, chain, grid)) return false;
 
         //если на позиции другая фигура
-        //if (grid.Get(pos) != null) return false;
+        if (grid.Get(pos) != null) return false;
 
         //если это "обратый" ход
         if (chain.Last.Previous != null && chain.Last.Previous.Value == pos) return false;

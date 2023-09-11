@@ -8,12 +8,13 @@ using UnityEngine;
 
 namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
 {
-    public class ChessGridNavigator : IChessGridNavigator, IChainBilder
+    public class ChessGridNavigator : IChessGridNavigator, IChainMaker
     {
         private Figure figure;
-        //todo за 500 итерация справляется, но нужно оптимизировать алгоритм и добавить защиту от обратного хода
-        //сократил с 512 до 350, думаю достаточно done
-        private int countIteration = 2048*4;
+
+        //большинство фигур справляется быстро до 500 итераций, однако для короля с проходом через все поле понадобилось
+        //порядка 8000 итераций
+        private readonly int countIteration = 2048*4;
         public List<LinkedList<Vector2Int>> ChainContener { get; set; }
 
         public Vector2Int FinalPosition { get; set; }
@@ -27,9 +28,10 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
         public List<Vector2Int> FindPath(ChessUnitType unit, Vector2Int from, Vector2Int to, ChessGrid grid)
         {
             //напиши реализацию не меняя сигнатуру функции
-            FinalPosition = to;
             
             Grid = grid;
+
+            FinalPosition = to;
 
             figure = DetectFigure(unit);
 
@@ -37,6 +39,7 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
             InitChainContener(from);
 
             var chaine = ChainContener.FirstOrDefault();
+
             int i = 0;
 
             while (i <= countIteration)
@@ -73,7 +76,7 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
             for (int i = 0; i < figure.MovesCount; i++)
             {
                 //возможно это костыль и можно лучше, но пока оставлю так
-                LinkedList<Vector2Int> original_chain = new LinkedList<Vector2Int>(chain);
+                LinkedList<Vector2Int> original_chain = new(chain);
 
                 var unit = original_chain.Last.Value + figure.Moves[i];
 
