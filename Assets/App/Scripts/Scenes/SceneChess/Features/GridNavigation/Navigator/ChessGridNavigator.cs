@@ -1,5 +1,4 @@
 ﻿using App.Scripts.Scenes.SceneChess.Features.ChessField.GridMatrix;
-using App.Scripts.Scenes.SceneChess.Features.ChessField.Piece;
 using App.Scripts.Scenes.SceneChess.Features.ChessField.Types;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,92 +6,55 @@ using UnityEngine;
 
 namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
 {
-    public class ChessGridNavigator : IChessGridNavigator, IChainMaker
+    public class ChessGridNavigator : IChessGridNavigator
     {
         private Figure figure;
+        private ChainPathService chainPathService;
 
         //большинство фигур справляется быстро до 500 итераций, однако для короля с проходом через все поле понадобилось
         //порядка 8000 итераций
         private readonly int countIteration = 2048*4;
-        public List<LinkedList<Vector2Int>> ChainContener { get; set; }
-
-        public Vector2Int FinalPosition { get; set; }
+        public static LinkedList<LinkedList<Vector2Int>> ChainContener { get; set; }
 
         public LinkedList<Vector2Int> FinalChain { get; set; }
-
-        public ChessGrid Grid { get; set; }
-
-        public IEnumerable<ChessUnit>  GridFigure {get; set;}
 
         public List<Vector2Int> FindPath(ChessUnitType unit, Vector2Int from, Vector2Int to, ChessGrid grid)
         {
             //напиши реализацию не меняя сигнатуру функции
-            
-            Grid = grid;
-
-            FinalPosition = to;
-
-            figure = DetectFigure(unit);
 
             //создаем хранилище для цепочек
             InitChainContener(from);
 
-            var chaine = ChainContener.FirstOrDefault();
+            //определяем фигуру и ее параметры
+            figure = DetectFigure(unit);
+
+            //передаем все для обработки в сервис
+            chainPathService = new(figure, grid, to);
+
+            LinkedList<Vector2Int> chain = ChainContener.FirstOrDefault();
 
             int i = 0;
 
             while (i <= countIteration)
             {
-                FinalChain = AddUnitToChain(chaine);
+                FinalChain = chainPathService.MakeChainList(chain);
+
                 if (FinalChain != null) return FinalChain.ToList();
-                chaine = ChainContener.FirstOrDefault();
+
+                ChainContener.RemoveFirst();
+                chain = ChainContener.FirstOrDefault();
                 i++;
             }
+
+            //не очень понятно зачем по условию возвращать null, в частности
+            //если двигать слона на белое поле, сцена зависает
             return null;
-        }
-
-        public bool ChekVictory(Vector2Int pos)
-        {
-
-            //если целевая позиция найдена и мир спасен
-            if (pos == FinalPosition) return true;
-
-            return false;
         }
 
         public void InitChainContener(Vector2Int pos)
         {
-            ChainContener = new()
-            {
-                new LinkedList<Vector2Int>(new List<Vector2Int>() { pos })
-            };
-
-        }
-        public LinkedList<Vector2Int> AddUnitToChain(LinkedList<Vector2Int> chain)
-        {
-            figure.Moves = figure.GetAviableMoves(chain.Last.Value, chain, Grid);
-            
-            for (int i = 0; i < figure.MovesCount; i++)
-            {
-                //возможно это костыль и можно лучше, но пока оставлю так
-                LinkedList<Vector2Int> original_chain = new(chain);
-
-                var unit = original_chain.Last.Value + figure.Moves[i];
-
-                if (ChekVictory(unit))
-                {
-                    original_chain.AddLast(unit);
-                    return original_chain;
-                }
-                else
-                {
-                    original_chain.AddLast(unit);
-                    ChainContener.Add(original_chain);
-                }
-            }
-            ChainContener.RemoveAt(0);
-            return null;
-
+            ChainContener = new();
+            ChainContener.AddFirst(new LinkedList<Vector2Int>(new List<Vector2Int>() { pos }));
         }
 
         private Figure DetectFigure(ChessUnitType unit)
@@ -100,17 +62,17 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
             switch (unit)
             {
                 case ChessUnitType.Pon:
-                    return new Pon(unit);
+                    return new Pon();
                 case ChessUnitType.Knight:
-                    return new Knight(unit);
+                    return new Knight();
                 case ChessUnitType.Rook:
-                    return new Rook(unit);
+                    return new Rook();
                 case ChessUnitType.Bishop:
-                    return new Bishop(unit);
+                    return new Bishop();
                 case ChessUnitType.Queen:
-                    return new Queen(unit);
+                    return new Queen();
                 case ChessUnitType.King:
-                    return new King(unit);
+                    return new King();
             }
             return null;
         }
