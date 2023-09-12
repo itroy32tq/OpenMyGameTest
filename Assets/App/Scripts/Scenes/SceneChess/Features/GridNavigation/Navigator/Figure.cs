@@ -15,21 +15,16 @@ public abstract class Figure
 
     protected Vector2Int[] _baseModulStep;
     public Vector2Int[] BaseStep => _baseModulStep;
-
-    public List<Vector2Int> Moves { get => _moves; set => _moves = value; }
-    public int MovesCount { get => _moves.Count; }
 }
 
 public class Pon : Figure
 {
-    
     public Pon()
     {
         _baseModulStep = new[] { new Vector2Int(0, 1) };
         //todo добавить костыль для пешки, не нашел как узнать ее цвет, т.е. черная пешка не сможет ходить
         _direction = new[] {new Vector2Int(0,1)};
         _mul = 1; 
-
     }
 }
 public class Knight : Figure
