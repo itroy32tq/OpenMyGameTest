@@ -113,7 +113,8 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
             try
             {
                 int[]  aggregateIndexArray = (from p in levelProperty select p.Value).Aggregate((first, next) => first.Concat(next).ToArray());
-                aggregateIndexArray = aggregateIndexArray.OrderBy(x => x).ToArray();
+                aggregateIndexArray = aggregateIndexArray.Distinct().OrderBy(x => x).ToArray();
+
                 string aggregateWordArray = (from p in levelProperty select p.Key).Aggregate((first, next) => next + first);
 
                 //количество символов в словах несоответствует количеству индексов для их расшифровки
@@ -125,10 +126,12 @@ namespace App.Scripts.Scenes.SceneFillwords.Features.ProviderLevel
                 // if (aggregateWordArray.Length < 2 || aggregateIndexArray.Last() >= fillService.ScalarSize) return false;
 
                 //техническое задание по сравнению с первоночальным менялось, и условие о том, что количество символов должно заполнять 
-                //квадратную матрицу полностью без пустот, было добавлено позже. До того как я увидел изменения я уже реализовал свой вариант, когда букв может быть меньше чем ячеек
-                //в это случае на пустом месте я сделал пробельный символ. Когда стало понятно, что условие изменилось, я внес правки для соответствия: закомментировал 125 и 88 строку
-                //На мой взгляд мой вариант даже лучше выглядит), так как для варианта в условии, выпадате много слов и уровней.
-                //
+                //квадратную матрицу полностью без пустот, было добавлено позже. До того как я увидел изменения мною уже был реализовал свой вариант,
+                //когда букв может быть меньше чем ячеек. В это случае пустые места я заполнял пробельными символами. Когда стало понятно, что условие изменилось,
+                //я внес правки для соответствия: закомментировал 125 и 88 строку. На мой взгляд мой вариант даже лучше выглядит :),
+                //так как позволяет отображать больше уровней => все где количество не квадрат числа большего 1
+
+                //индексы для уровня должны представлять собой ряд от 0 до количества букв
                 if (aggregateIndexArray.First() != 0 || aggregateIndexArray.Last() != fillService.ScalarSize - 1) return false;
                 return true;
             }
