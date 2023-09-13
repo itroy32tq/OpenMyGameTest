@@ -12,31 +12,30 @@ namespace App.Scripts.Scenes.SceneWordSearch.Features.Level.BuilderLevelModel.Pr
 
         public ProviderWordLevel()
         {
-            try
-            {
-                TextAsset[] jsonFiles = Resources.LoadAll<TextAsset>("WordSearch");
+            TextAsset[] jsonFiles = Resources.LoadAll<TextAsset>("WordSearch");
 
-                foreach (TextAsset asset in jsonFiles)
-                {
-                    LevelInfo levelInfo = JsonUtility.FromJson<LevelInfo>(asset.text);
-                    if (levelInfo != null) _wordsList.Add(levelInfo);
-                }
-            }
-            catch
+            foreach (TextAsset asset in jsonFiles)
             {
-                throw new Exception("Проблемы с данными для уровней в ProviderWordLevel");
+                LevelInfo levelInfo = JsonUtility.FromJson<LevelInfo>(asset.text);
+                if (levelInfo != null) _wordsList.Add(levelInfo);
             }
 
         }
 
         public LevelInfo LoadLevelData(int levelIndex)
         {
-            
             //напиши реализацию не меняя сигнатуру функции
 
-            ValidationWord(_wordsList[levelIndex - 1].words, levelIndex);
+            try 
+            {
+                ValidationWord(_wordsList[levelIndex - 1].words, levelIndex);
 
-            return _wordsList[levelIndex - 1];
+                return _wordsList[levelIndex - 1];
+            }
+            catch
+            {
+                throw new Exception("Отсутствуют уровни для ProviderWordLevel в папке ресурсов");
+            }
         }
 
         /// <summary>
