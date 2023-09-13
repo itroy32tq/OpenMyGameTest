@@ -11,8 +11,11 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
         private Figure figure;
         private ChainPathService chainPathService;
 
-        //большинство фигур справляется быстро до 500 итераций, однако для короля с проходом через все поле понадобилось
-        //порядка 8000 итераций
+        /// <summary>
+        /// countIteration оценочная переменная, что бы понимать сколько итераций необходимо что бы найти путь
+        /// большинство фигур справляется быстро до 500 итераций, однако для короля с проходом через все поле понадобилось
+        /// порядка 8000 итераций
+        /// </summary>
         private readonly int countIteration = 2048*4;
         public static LinkedList<LinkedList<Vector2Int>> ChainContener { get; set; }
 
@@ -22,10 +25,8 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
         {
             //напиши реализацию не меняя сигнатуру функции
 
-            //создаем хранилище для цепочек
             InitChainContener(from);
 
-            //определяем фигуру и ее параметры
             figure = DetectFigure(unit);
 
             //передаем все для обработки в сервис
@@ -51,12 +52,22 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
             return null;
         }
 
+        /// <summary>
+        /// Создание контейнера цепочек с единственным списком из начального положения
+        /// </summary>
+        /// <param name="pos">стартовое положение фигуры</param>
         public void InitChainContener(Vector2Int pos)
         {
             ChainContener = new();
             ChainContener.AddFirst(new LinkedList<Vector2Int>(new List<Vector2Int>() { pos }));
         }
 
+        /// <summary>
+        /// Метод определения какой класс создать исходя и значения
+        /// enum ChessUnitType
+        /// </summary>
+        /// <param name="unit">тип фигуры</param>
+        /// <returns></returns>
         private Figure DetectFigure(ChessUnitType unit)
         {
             switch (unit)

@@ -15,13 +15,21 @@ public class ChainPathService
         _figure = figure; _grid = grid; _finalPos = finalPos;
     }
     private Vector2Int SelfPos => _chain.Last.Value;
-    private Vector2Int PreviousPos => _chain.Last.Previous.Value;
+    private LinkedListNode<Vector2Int> PreviousNode => _chain.Last.Previous;
     private Vector2Int OriginalPos => _chain.First.Value;
 
+    /// <summary>
+    /// Центральный метод по созданию цепочек ходов, он получился немного монстроузным в плане вложненности
+    /// но при любых других вариациях у меня получались лишние циклы по обходу вариантов. В данной реализации
+    /// я получая валидную цепочку могу сразу проверить что она финальная и прервать обход
+    /// </summary>
+    /// <param name="chain">целевая цепочка ходов</param>
+    /// <returns></returns>
     public LinkedList<Vector2Int> MakeChainList(LinkedList<Vector2Int> chain)
     {
         List<Vector2Int> moves = new ();
         _chain = chain;
+
         foreach (var step in _figure.BaseStep)
         {
             for (int i = 0; i < _figure.Mul; i++)
@@ -45,21 +53,28 @@ public class ChainPathService
         }
         return null;
     }
+    /// <summary>
+    /// Метод валидации последнего элемента цепочки (последнего хода)
+    /// </summary>
+    /// <param name="pos">вероятный послений элемент цепочки</param>
+    /// <returns></returns>
     public bool ValidateTargetStep(Vector2Int pos)
     {
+        if (IsCrossingBoardBound(pos)) return false;
 
-        //если позиция за пределами экрана
-        if (pos.x < 0 || pos.x > 7 || pos.y < 0 || pos.y > 7) return false;
-
-        //если на пути другая фигура
         if (IsCrossingPath(pos)) return false;
 
-        //если это "обратый" ход
-        if (_chain.Last.Previous != null && PreviousPos == pos) return false;
+        if (IsReverseStep(pos)) return false;
 
         return true;
     }
-
+    /// <summary>
+    /// Метод проверки наличия другой фигуры на пути, я проверяю исходя из того
+    /// что если вектор пути проходит через позицию с другой фигрой, то это позиция
+    /// разбивает вектор на две равные части
+    /// </summary>
+    /// <param name="pos">вероятный послений элемент цепочки</param>
+    /// <returns></returns>
     private bool IsCrossingPath(Vector2Int pos)
     {
         Vector2Int vectorPath = SelfPos - pos;
@@ -71,12 +86,29 @@ public class ChainPathService
             //проверка на самого себя
             if (figure.CellPosition == OriginalPos) continue;
 
-            //todo возможно есть способ лучше, но с ходу я не придумал, точка лежит на прямой, если разбивает его на отрезки
             float vector1 = (pos - figure.CellPosition).magnitude;
             float vector2 = (figure.CellPosition - SelfPos).magnitude;
             if (Mathf.Approximately(pathLen, vector2 + vector1)) return true;
         }
         return false;
+    }
+    /// <summary>
+    /// Метод проверки выхода фигуры за пределы доски
+    /// </summary>
+    /// <param name="pos">вероятный послений элемент цепочки</param>
+    /// <returns></returns>
+    private bool IsCrossingBoardBound(Vector2Int pos)
+    {
+        return pos.x < 0 || pos.x > 7 || pos.y < 0 || pos.y > 7;
+    }
+    /// <summary>
+    /// Метод проверки на "обратные" ход - мы не возвращаемся в обратный шаг цепочки
+    /// </summary>
+    /// <param name="pos">вероятный послений элемент цепочки</param>
+    /// <returns></returns>
+    private bool IsReverseStep(Vector2Int pos)
+    {
+        return PreviousNode != null && PreviousNode.Value == pos;
     }
 
 }

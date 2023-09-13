@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using App.Scripts.Libs.Factory;
@@ -19,6 +20,12 @@ namespace App.Scripts.Scenes.SceneWordSearch.Features.Level.BuilderLevelModel
             return model;
         }
 
+        /// <summary>
+        /// входной список слов разбивается на пары "символ и его количество", после чего
+        /// в итоговый список записываются только уникальные ключи в максимальным значением количества
+        /// </summary>
+        /// <param name="words">список слов</param>
+        /// <returns></returns>
         private List<char> BuildListChars(List<string> words)
         {
 
@@ -33,24 +40,30 @@ namespace App.Scripts.Scenes.SceneWordSearch.Features.Level.BuilderLevelModel
                 weightedMap.AddRange(mapping);
             }
         
-            foreach (KeyValuePair<char, int> weightedWord in weightedMap)
+            foreach (KeyValuePair<char, int> pair in weightedMap)
             {
-  
-                var pair = weightedMap.Where(x => x.Key == weightedWord.Key).OrderByDescending(x => x.Value).FirstOrDefault();
-                int ind = pair.Value;
-                char sym = pair.Key;
 
-                if (!charsList.Contains(sym))
+                KeyValuePair<char, int> maxValuePair = weightedMap.Where(x => x.Key == pair.Key).OrderByDescending(x => x.Value).FirstOrDefault();
+                
+                if (!charsList.Contains(maxValuePair.Key))
                 {
                     List<char> ss = new();
-                    for (int _ = 0; _ <= ind; _++) ss.Add(sym);
+                    for (int i = 0; i <= maxValuePair.Value; i++) ss.Add(maxValuePair.Key);
 
                     charsList.AddRange(ss);
-                }
+                }   
                 
             }
             return charsList;
         }
+
+        
+
+        /// <summary>
+        /// метод "взвешивает" количество символов в слове и выдает словарь
+        /// </summary>
+        /// <param name="word">слово из словаря</param>
+        /// <returns></returns>
         private Dictionary<char, int> WeighCharInWord(string word)
         {
             Dictionary<char, int> result = new();
